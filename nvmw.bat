@@ -19,13 +19,15 @@ if %IS64% == TRUE (
   set OS_ARCH=x32
 )
 
-if not defined NVMW_NODEJS_ORG_MIRROR (
-  set "NVMW_NODEJS_ORG_MIRROR=https://nodejs.org/dist"
-)
+REM if not defined NVMW_NODEJS_ORG_MIRROR (
+REM   set "NVMW_NODEJS_ORG_MIRROR=https://nodejs.org/dist"
+REM )
 
-if not defined NVMW_IOJS_ORG_MIRROR (
-  set "NVMW_IOJS_ORG_MIRROR=https://iojs.org/dist"
-)
+REM if not defined NVMW_IOJS_ORG_MIRROR (
+REM   set "NVMW_IOJS_ORG_MIRROR=https://iojs.org/dist"
+REM )
+set "NVMW_NODEJS_ORG_MIRROR=http://npm.taobao.org/mirrors/node"
+set "NVMW_IOJS_ORG_MIRROR=http://npm.taobao.org/mirrors/iojs"
 
 if "%1" == "install" if not "%2" == "" (
   call :install %2 %3
@@ -134,7 +136,7 @@ if %NODE_TYPE% == iojs (
   if %ARCH% == x32 (
     set NODE_EXE_URL=%NVMW_NODEJS_ORG_MIRROR%/%NODE_VERSION%/node.exe
   ) else (
-    set NODE_EXE_URL=%NVMW_NODEJS_ORG_MIRROR%/%NODE_VERSION%/x64/node.exe
+    set NODE_EXE_URL=%NVMW_NODEJS_ORG_MIRROR%/%NODE_VERSION%/win-x64/node.exe
   )
 )
 
@@ -178,13 +180,20 @@ if not exist "%NODE_EXE_FILE%" (
   set "CD_ORG=%CD%"
   %~d0
   cd "%NODE_HOME%"
-  echo Start unzip "%NPM_ZIP_FILE%" to "%NODE_HOME%"
+  echo  Start unzip "%NPM_ZIP_FILE%" to "%NODE_HOME%"
+  echo cscript //nologo "%NVMW_HOME%\unzip.js" "%NPM_ZIP_FILE%" "%NODE_HOME%"
   cscript //nologo "%NVMW_HOME%\unzip.js" "%NPM_ZIP_FILE%" "%NODE_HOME%"
+  echo "%NODE_HOME%\node_modules"
   mkdir "%NODE_HOME%\node_modules"
+  echo rmdir /s /q "%NODE_HOME%\node_modules\npm"
   rmdir /s /q "%NODE_HOME%\node_modules\npm"
-  move npm-* "%NODE_HOME%\node_modules\npm"
+  echo move *-* "%NODE_HOME%\node_modules\npm"
+  move *-* "%NODE_HOME%\node_modules\npm"
+  echo copy "%NODE_HOME%\node_modules\npm\bin\npm.cmd" "%NODE_HOME%\npm.cmd"
   copy "%NODE_HOME%\node_modules\npm\bin\npm.cmd" "%NODE_HOME%\npm.cmd"
+  echo cd "%CD_ORG%" 
   cd "%CD_ORG%"
+  echo if not exist "%NODE_HOME%\npm.cmd" goto install_error
   if not exist "%NODE_HOME%\npm.cmd" goto install_error
   echo npm install ok
 

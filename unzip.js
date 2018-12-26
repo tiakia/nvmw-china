@@ -11,12 +11,12 @@ function main(args) {
   }
 
   var zipfile = args(0),
-      outPath = args(1);
+    outPath = args(1);
 
   var shell = new ActiveXObject("shell.application");
   var zip = shell.NameSpace(zipfile);
   var out = shell.NameSpace(outPath);
   out.CopyHere(zip.Items(), 0);
- 
-  shell = null; 
+
+  shell = null;
 }

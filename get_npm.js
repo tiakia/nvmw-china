@@ -1,11 +1,13 @@
 var util = require('util'),
-    fs = require('fs'),
-    path = require('path'),
-    wget = require('./wget');
+  fs = require('fs'),
+  path = require('path'),
+  wget = require('./wget');
 
 var NPM_PKG_JSON_URL = 'https://raw.githubusercontent.com/%s/%s/deps/npm/package.json';
 // https://github.com/npm/npm/tags
-var NVMW_NPM_MIRROR = process.env.NVMW_NPM_MIRROR || 'https://github.com/npm/npm/archive';
+//var NVMW_NPM_MIRROR = process.env.NVMW_NPM_MIRROR || 'https://github.com/npm/npm/archive';
+var NVMW_NPM_MIRROR = 'http://npm.taobao.org/mirrors/npm' || 'https://github.com/npm/npm/archive';
+
 var BASE_URL = NVMW_NPM_MIRROR + '/v%s.zip';
 
 var targetDir = process.argv[2];
@@ -15,7 +17,8 @@ var binVersion = versions[1];
 
 if (binType === 'iojs') {
   // detect npm version from https://iojs.org/dist/index.json
-  var NVMW_IOJS_ORG_MIRROR = process.env.NVMW_IOJS_ORG_MIRROR || 'https://iojs.org/dist';
+  //var NVMW_IOJS_ORG_MIRROR = process.env.NVMW_IOJS_ORG_MIRROR || 'https://iojs.org/dist';
+  var NVMW_IOJS_ORG_MIRROR = 'http://npm.taobao.org/mirrors/iojs' || 'https://iojs.org/dist';
   var pkgUri = NVMW_IOJS_ORG_MIRROR + '/index.json';
   wget(pkgUri, function (filename, content) {
     if (filename === null) {
@@ -41,13 +44,24 @@ if (binType === 'iojs') {
     downloadNpmZip(npmVersion);
   });
 } else {
-  var pkgUri = util.format(NPM_PKG_JSON_URL, 'joyent/node',
-    binVersion === 'latest' ? 'master' : binVersion);
+  //var pkgUri = util.format(NPM_PKG_JSON_URL, 'joyent/node',
+  //binVersion === 'latest' ? 'master' : binVersion);
+  var pkgUri = "https://npm.taobao.org/mirrors/node/index.json";
   wget(pkgUri, function (filename, pkg) {
+    //if (filename === null) {
+    //return noNpmAndExit();
+    //}
+    //downloadNpmZip(JSON.parse(pkg).version);
     if (filename === null) {
       return noNpmAndExit();
     }
-    downloadNpmZip(JSON.parse(pkg).version);
+    var _pkg = JSON.parse(pkg);
+    for (var i = 0, n = _pkg.length; i < n; i++) {
+      var obj = _pkg[i];
+      if (obj.version === binVersion) {
+        downloadNpmZip(obj.npm);
+      }
+    }
   });
 }
 
@@ -60,8 +74,8 @@ function downloadNpmZip(version) {
   var uri = util.format(BASE_URL, version);
   wget(uri, function (filename, data) {
     if (filename === null) {
-        console.error('Can\'t get npm: ' + uri);
-        process.exit(1);
+      console.error('Can\'t get npm: ' + uri);
+      process.exit(1);
     }
     fs.writeFile(path.join(targetDir, 'npm.zip'), data, function (err) {
       if (err) {
